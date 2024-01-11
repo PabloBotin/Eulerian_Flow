@@ -317,7 +317,7 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 		overRelaxation : 1.9,
 		obstacleX : 0.0,
 		obstacleY : 0.0,
-		obstacleRadius: 0.80,
+		obstacleRadius: 0.15,
 		paused: false,
 		sceneNr: 0,
 		showObstacle: false,
@@ -679,72 +679,77 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 		
 		scene.showObstacle = true;
 	}
+// Interaction 
+var mouseDown = false;
+var selectedObject = null;
+var objects = [];
 
-	// interaction -------------------------------------------------------
+function startDrag(x, y) {
+    let bounds = canvas.getBoundingClientRect();
+    let mx = x - bounds.left - canvas.clientLeft;
+    let my = y - bounds.top - canvas.clientTop;
+    mouseDown = true;
 
-	var mouseDown = false;
+    x = mx / cScale;
+    y = (canvas.height - my) / cScale;
 
-	function startDrag(x, y) {
-		let bounds = canvas.getBoundingClientRect();
+    // Check if an existing object is being clicked
+    selectedObject = getObjectAtPosition(x, y);
 
-		let mx = x - bounds.left - canvas.clientLeft;
-		let my = y - bounds.top - canvas.clientTop;
-		mouseDown = true;
+    if (!selectedObject) {
+        // If no existing object is clicked, create a new one
+        selectedObject = createObject(x, y);
+        objects.push(selectedObject);
+    }
+}
 
-		x = mx / cScale;
-		y = (canvas.height - my) / cScale;
+function drag(x, y) {
+    if (mouseDown && selectedObject) {
+        let bounds = canvas.getBoundingClientRect();
+        let mx = x - bounds.left - canvas.clientLeft;
+        let my = y - bounds.top - canvas.clientTop;
+        x = mx / cScale;
+        y = (canvas.height - my) / cScale;
 
-		setObstacle(x,y, true);
-	}
+        setObstacle(selectedObject, x, y);
+    }
+}
 
-	function drag(x, y) {
-		if (mouseDown) {
-			let bounds = canvas.getBoundingClientRect();
-			let mx = x - bounds.left - canvas.clientLeft;
-			let my = y - bounds.top - canvas.clientTop;
-			x = mx / cScale;
-			y = (canvas.height - my) / cScale;
-			setObstacle(x,y, false);
-		}
-	}
+function endDrag() {
+    mouseDown = false;
+    selectedObject = null;
+}
 
-	function endDrag() {
-		mouseDown = false;
-	}
+function getObjectAtPosition(x, y) {
+    // Loop through existing objects to find the one at the specified position
+    for (let obj of objects) {
+        if (x >= obj.x && x <= obj.x + obj.width && y >= obj.y && y <= obj.y + obj.height) {
+            return obj;
+        }
+    }
+    return null;
+}
 
-	canvas.addEventListener('mousedown', event => {
-		startDrag(event.x, event.y);
-	});
+function createObject(x, y) {
+    // Create a new object with initial position
+    return {
+        x: x,
+        y: y,
+        width: 50, // Adjust width and height as needed
+        height: 50,
+    };
+}
 
-	canvas.addEventListener('mouseup', event => {
-		endDrag();
-	});
+// Rest of your existing code...
 
-	canvas.addEventListener('mousemove', event => {
-		drag(event.x, event.y);
-	});
+// Modify setObstacle function to handle objects
+function setObstacle(obj, x, y, isNewObject) {
+    // Handle updating the position of the selected object or a new object
+    obj.x = x;
+    obj.y = y;
 
-	canvas.addEventListener('touchstart', event => {
-		startDrag(event.touches[0].clientX, event.touches[0].clientY)
-	});
-
-	canvas.addEventListener('touchend', event => {
-		endDrag()
-	});
-
-	canvas.addEventListener('touchmove', event => {
-		event.preventDefault();
-		event.stopImmediatePropagation();
-		drag(event.touches[0].clientX, event.touches[0].clientY)
-	}, { passive: false});
-
-
-	document.addEventListener('keydown', event => {
-		switch(event.key) {
-			case 'p': scene.paused = !scene.paused; break;
-			case 'm': scene.paused = false; simulate(); scene.paused = true; break;
-		}
-	});
+    // Add additional logic if needed
+}
 
 	function toggleStart()
 	{

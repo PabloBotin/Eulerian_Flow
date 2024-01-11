@@ -638,18 +638,18 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 		}
 	}
 
-	function setObstacle(x, y, reset) {
+	function setObstacle(obj, x, y, reset) {
 
 		var vx = 0.0;
 		var vy = 0.0;
 
 		if (!reset) {
-			vx = (x - scene.obstacleX) / scene.dt;
-			vy = (y - scene.obstacleY) / scene.dt;
+			vx = (x - obj.x) / scene.dt;
+			vy = (y - obj.y) / scene.dt;
 		}
 
-		scene.obstacleX = x;
-		scene.obstacleY = y;
+		obj.x = x;
+		obj.y = y;
 		var r = scene.obstacleRadius;
 		var f = scene.fluid;
 		var n = f.numY;
@@ -683,6 +683,8 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 	// interaction -------------------------------------------------------
 
 	var mouseDown = false;
+	var selectedObject = null;
+	var objects = [];
 
 	function startDrag(x, y) {
 		let bounds = canvas.getBoundingClientRect();
@@ -694,22 +696,49 @@ THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLI
 		x = mx / cScale;
 		y = (canvas.height - my) / cScale;
 
-		setObstacle(x,y, true);
+		// Check if an existing object is being clicked
+		selectedObject = getObjectAtPosition(x, y);
+		
+	    	if (!selectedObject) {
+        	// If no existing object is clicked, create a new one
+        	selectedObject = createObject(x, y);
+        	objects.push(selectedObject);
+    		}
 	}
 
 	function drag(x, y) {
-		if (mouseDown) {
+		if (mouseDown && selectedObject) {
 			let bounds = canvas.getBoundingClientRect();
 			let mx = x - bounds.left - canvas.clientLeft;
 			let my = y - bounds.top - canvas.clientTop;
 			x = mx / cScale;
 			y = (canvas.height - my) / cScale;
-			setObstacle(x,y, false);
+			setObstacle(selectedObject, x, y);
 		}
 	}
 
 	function endDrag() {
 		mouseDown = false;
+		selectedObject=null;
+	}
+
+	function getObjectAtPosition(x, y) {
+		// Loop through existing objects to find the one at the specified position
+    		for (let obj of objects) {
+        		if (x >= obj.x && x <= obj.x + obj.width && y >= obj.y && y <= obj.y + obj.height) {
+            			return obj;
+        		}
+   		 }
+	}
+
+	function createObject(x, y) {
+    	// Create a new object with initial position
+    		return {
+        		x: x,
+        		y: y,
+        		width: 15, // Adjust width and height as needed
+        		height: 15,
+    		};
 	}
 
 	canvas.addEventListener('mousedown', event => {
